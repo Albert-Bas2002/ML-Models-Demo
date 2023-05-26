@@ -11,16 +11,16 @@ from autograd import grad
 
 folder_path = "D:\my_python\Name_Train_Folder"
 training_data=[]
-with os.scandir(folder_path) as entries:#Формируем данные
+with os.scandir(folder_path) as entries:
     for entry in entries:
         vector = np.zeros(10)
         image = Image.open(entry.path).convert('L')
         filename_temp = os.path.basename(entry)
-        filename=re.findall('[0-9]+', filename_temp)[1]
+        filename=re.findall('[0-9]+', filename_temp)[1]#extraction of a digit from a photo name
         vector[int(filename)]=1
         img_array = np.array(image)
         pixels = img_array.reshape(28, 28) / 255
-        #shifts = [(0, 0), (0, -3), (0, 3)] # Для шума вправо влево
+        #shifts = [(0, 0), (0, -3), (0, 3)] # For noise right to left
         shifts = [(0, 0)]
         for shift in shifts:
             shifted_array = np.roll(pixels, shift, axis=(0, 1))
@@ -34,7 +34,7 @@ with os.scandir(folder_path) as entries:
 
         image = Image.open(entry.path).convert('L')
         filename_temp = os.path.basename(entry)
-        filename=re.findall('[0-9]+', filename_temp)[1]
+        filename=re.findall('[0-9]+', filename_temp)[1]#extraction of a digit from a photo name
         img_array = np.array(image)
         pixels = img_array.reshape(-1)/255
         test_data.append([pixels,int(filename)])
@@ -49,15 +49,15 @@ def f(z):#Сигмоида
 
 class Network(object):
     def __init__(self, sizes):
-        self.num_layers = len(sizes) #количество слоев
-        self.sizes = sizes #сохраняем списко нашей нейросети
+        self.num_layers = len(sizes)
+        self.sizes = sizes 
         self.biases = [np.random.randn(y) for y in sizes[1:]]
-        self.weights = [np.random.randn(x, y) #формируем нейросеть
+        self.weights = [np.random.randn(x, y)
                         for y, x in zip(sizes, sizes[1:])]
 
     def feedforward(self, a,biases,weights):
         for b, w in zip(biases, weights):
-            a = f(np.dot(a, w.T) + b)#прямое распространение
+            a = f(np.dot(a, w.T) + b)
         return a
 
     def backprop(self,training_data,biases,weights):
@@ -65,8 +65,8 @@ class Network(object):
         output = self.feedforward(x,biases,weights)
         return np.sum((output - y) ** 2)
 
-    def SGD(self, training_data,test_data, epochs, eta):
-        grad_s = grad(self.backprop, argnum=(1,2))#Автоградиент
+    def train(self, training_data,test_data, epochs, eta):
+        grad_s = grad(self.backprop, argnum=(1,2))#Autograd
         for ep in range(epochs):
             for tr in training_data:
                 gradient=grad_s(tr,self.biases,self.weights)
@@ -89,18 +89,19 @@ class Network(object):
 
 
 photo_analyzer=Network([28*28,16,16,10])
-photo_analyzer.SGD(training_data=training_data,test_data=test_data,epochs=10, eta=0.01)
+photo_analyzer.train(training_data=training_data,test_data=test_data,epochs=10, eta=0.01)
 
 joblib.dump(photo_analyzer, 'photo_analyzer.joblib')
 photo_analyzer = joblib.load('photo_analyzer.joblib')
 
+#Code for drawing numbers
 print('0      1      2      3      4      5      6      7      8      9')
 canvas = np.zeros((28, 28))
 pygame.init()
 clock = pygame.time.Clock()
 FPS = 60
 screen = pygame.display.set_mode((252, 252))
-pygame.display.set_caption('Рисовалка')
+pygame.display.set_caption('Drawing')
 
 WHITE = (255, 255, 255)
 x, y = 0, 0
